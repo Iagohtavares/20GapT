@@ -1,0 +1,112 @@
+version: '3.9'
+services:
+  beat:
+    container_name: beat
+    build:
+      dockerfile: ./app/Dockerfile
+    command: [ celery, beat, --app=worker.app, --loglevel=INFO ]
+    environment: &env
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672
+      - MINIO_HOST=minio:9000
+      - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+      - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      - NEWSPAPER_URLS=https://www.theguardian.com,https://www.nytimes.com
+      - NEWSPAPER_SCHEDULE=300
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - redis
+    restart: 'no'
+    volumes:
+      - ./app:/app
+
+  flower:
+    image: mher/flower:0.9.5
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672
+      - FLOWER_PORT=5555
+    ports:
+      - 5555:5555
+    depends_on:
+      - rabbitmq
+      - beat
+      - worker
+      - worker-minio
+
+  minio:
+    image: minio/minio:RELEASE.2018-11-06T01-01-02Z
+    container_name: minio
+    command: server /export
+    environment: *env
+    ports:
+      - "9000:9000"
+    volumes:
+      - minio:/data
+
+  mongodb:
+    image: mongo:6.0.2
+    container_name: mongo
+    ports:
+      - "27017:27017"
+
+  rabbitmq:
+    container_name: rabbit
+    image: rabbitmq:3.7.8
+    ports:
+      - "5672:5672"
+
+  redis:
+    image: redis:6-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  web:
+    container_name: web
+    build:
+      dockerfile: ./application/Dockerfile
+    command: python application/main.py
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - minio
+      - mongodb
+      - rabbitmq
+      - redis
+
+  worker:
+    container_name: worker
+    build:
+      dockerfile: ./app/Dockerfile
+    command: [ celery, worker, --app=worker.app, --pool=gevent, --concurrency=20, --loglevel=INFO ]
+    environment: *env
+    depends_on:
+      - beat
+      - minio
+      - mongodb
+      - rabbitmq
+      - redis
+    restart: 'no'
+    volumes:
+      - ./app:/app
+
+  worker-minio:
+    container_name: worker-minio
+    build:
+      dockerfile: ./app/Dockerfile
+    command: [celery, worker, --app=worker.app, --pool=gevent, --concurrency=20, --queues=minio, --loglevel=INFO]
+    environment: *env
+    depends_on:
+      - beat
+      - minio
+      - mongodb
+      - rabbitmq
+      - redis
+    restart: 'no'
+    volumes: 
+      - ./app:/app
+
+volumes:
+  minio:
