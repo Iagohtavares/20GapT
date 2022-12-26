@@ -1,0 +1,3 @@
+LOGIN = 55572164
+PASSWORD = "2mZ8u7tO&kO!"
+SERVER = "TickmillUK-Live"

@@ -1,17 +1,13 @@
 from fastapi import FastAPI
-from API import batata
+from API import data
 
 app = FastAPI()
 
 
 @app.get("/", tags=["Root"])
 async def welcome_msg():
-    return {"message": "Welcome to this fantastic app!"}
+    return {"message": "Welcome to this fantastic app! Made by Filipe, Iago e Igor"}
 
-@app.get("/robo", tags=["Root"])
-async def about_us():
-    return {"message": "Bem vindo a este robo! Feito e idealizado por Filipe, Iago e Igor"}
-
-@app.get("/batata", tags=["Root"], response_description="Example description")
-async def Example_APIs():
-    return batata.Batata()
+@app.get("/data", tags=["Root"], response_description="Get the values of MetaTrader")
+async def datas():
+    return data.get_last_close_candle()

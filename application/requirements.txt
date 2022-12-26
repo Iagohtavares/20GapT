@@ -1,7 +1,10 @@
 celery==4.2.1
 fastapi==0.73.0
 flower
+MetaTrader5
 motor
+pandas
 pymongo==4.1.1
-redis==4.3.4
+pytz
+redis
 uvicorn==0.17.0

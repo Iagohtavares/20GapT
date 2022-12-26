@@ -1,2 +1,0 @@
-def Batata():
-    return 'batata'
