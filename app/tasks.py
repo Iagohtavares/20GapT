@@ -25,7 +25,7 @@ def get_values(self):
         'content-type': 'application/json',
         'Content-Type': 'application/json'
     }
-    r = requests.get("http://192.168.15.8:8000/data", verify=False, headers=header)
+    r = requests.get("http://192.168.0.0:8000/data", verify=False, headers=header)
     if r.status_code in ['200', 200, '201', 201, '202', 202]:
         response = r.json()
         logger.info(response)
